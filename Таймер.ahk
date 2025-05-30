@@ -5,6 +5,30 @@
 #NoEnv
 DetectHiddenWindows on
 
+RegRead, Value_OnExit, HKEY_CURRENT_USER, Software\Timer, OnExit
+if (Value_OnExit == "")
+    RegWrite, REG_SZ, HKEY_CURRENT_USER, Software\Timer, OnExit, 0
+
+Menu, Tray, NoStandard
+Menu, tray, add, Открыть меню, GuiHide, Default
+Menu, tray, add
+Menu, tray, add, Выключать при закрытии, OnExit
+Menu, tray, add, Перезагрузить, ReloadScript
+Menu, tray, add, Выключить, ExitScript
+
+if (Value_OnExit)
+    Menu, tray, ToggleCheck, Выключать при закрытии
+
+loadDingMp3 := "https://github.com/darksoorok/timer/raw/refs/heads/main/ding.mp3"
+EnvGet, systemDrive, SystemDrive
+pathToDirSong := systemDrive "\Program Files\Timer"
+
+IfNotExist, %pathToDirSong%
+{
+    FileCreateDir, %pathToDirSong%
+    UrlDownloadToFile, %loadDingMp3%, %pathToDirSong%\ding.mp3
+}
+
 Time_Hour := 00
 Time_Min := 00
 Time_Sec := 00
@@ -21,7 +45,7 @@ Indicator1 := " "
 ResultTimes := A_Hour ":" A_Min ":" A_Sec
 
 Action := "Звуковое оповещение"
-hideWindow := 250
+hideWindow := 255
 stateWindow := 0
 yTime := 60
 yIndicator := 58
@@ -30,49 +54,37 @@ yButton := 190
 yTextToAction := 550
 ProcessName := ""
 
-RegRead, Value_OnExit, HKEY_CURRENT_USER, Software\Timer, OnExit
-if (Value_OnExit == "")
-    RegWrite, REG_SZ, HKEY_CURRENT_USER, Software\Timer, OnExit, 0
-
-Menu, Tray, NoStandard
-Menu, tray, add, Открыть меню, GuiHide, Default
-Menu, tray, add
-Menu, tray, add, Выключать при закрытии, OnExit
-Menu, tray, add, Перезагрузить, ReloadScript
-Menu, tray, add, Выключить, ExitScript
-
-if (Value_OnExit)
-    Menu, tray, ToggleCheck, Выключать при закрытии
-
 Gui, Destroy
 Gui, +LastFound
 
 Gui, Font, S36 Bold
 Gui, Font, cD3D3D3
-Gui, Add, Text, x13 y5 w70 h55 vTime_Hour_Up gHour_Up, %Time_Hour_Up%
-Gui, Add, Text, x98 y5 w70 h55 vTime_Min_Up gMin_Up, %Time_Min_Up%
-Gui, Add, Text, x183 y5 w70 h55 vTime_Sec_Up gSec_Up, %Time_Sec_Up%
+Gui, Add, Text, x13 y5 w60 h55 vTime_Hour_Up gHour_Up, %Time_Hour_Up%
+Gui, Add, Text, x98 y5 w60 h55 vTime_Min_Up gMin_Up, %Time_Min_Up%
+Gui, Add, Text, x183 y5 w60 h55 vTime_Sec_Up gSec_Up, %Time_Sec_Up%
 
-Gui, Add, Text, x13 y115 w70 h55 vTime_Hour_Down gHour_Down, %Time_Hour_Down%
-Gui, Add, Text, x98 y115 w70 h55 vTime_Min_Down gMin_Down, %Time_Min_Down%
-Gui, Add, Text, x183 y115 w70 h55 vTime_Sec_Down gSec_Down, %Time_Sec_Down%
+Gui, Add, Text, x13 y115 w60 h55 vTime_Hour_Down gHour_Down, %Time_Hour_Down%
+Gui, Add, Text, x98 y115 w60 h55 vTime_Min_Down gMin_Down, %Time_Min_Down%
+Gui, Add, Text, x183 y115 w60 h55 vTime_Sec_Down gSec_Down, %Time_Sec_Down%
 
-Gui, Font, S40 Bold
-Gui, Font, cBlack
-Gui, Add, Text, x77 y%yIndicator% w15 h55 vIndicator, %Indicator%
-Gui, Add, Text, x162 y%yIndicator% w15 h55 vIndicator1, %Indicator1%
-Gui, Font, S40 Bold
-Gui, Add, Text, x10 y%yTime% w70 h55 vTime_Hour, %Time_Hour%
-Gui, Add, Text, x95 y%yTime% w70 h55 vTime_Min, %Time_Min%
-Gui, Add, Text, x180 y%yTime% w70 h55 vTime_Sec, %Time_Sec%
-Gui, Font, S10 Bold, Calibri
+Gui, Font, S40 Bold cBlack
+Gui, Add, Text, x10 y%yTime% w60 h55 vTime_Hour, %Time_Hour%
+Gui, Add, Text, x95 y%yTime% w60 h55 vTime_Min, %Time_Min%
+Gui, Add, Text, x180 y%yTime% w60 h55 vTime_Sec, %Time_Sec%
+
+Gui, Font, S40 Bold, Calibri
+Gui, Add, Text, x75 y%yIndicator% w15 h55 vIndicator, %Indicator%
+Gui, Add, Text, x160 y%yIndicator% w15 h55 vIndicator1, %Indicator1%
+
+Gui, Font, S10 Bold
 Gui, Add, Text, x0 y%yTextToResult% w260 h20 Center vTextToResultTime, Таймер сработает в %ResultTimes%
+
 Gui, Font, S10 Norm
-Gui, Add, Button, x10 y%yButton% w240 h25 gActives vActive, %Active%
-Gui, Add, DropDownList, x10 y220 w240 h200 vAction gEditAction, Звуковое оповещение|Перезагрузить компьютер|Выключить компьютер|Завершить процесс
+Gui, Add, DropDownList, x10 y225 w240 h200 vAction gEditAction, Звуковое оповещение|Перезагрузить компьютер|Выключить компьютер|Завершить процесс
+Gui, Add, Button, x10 y255 w240 h20 gChoiseProcess vprocessButton, %processButton%
 Gui, Add, Text, x0 y%yTextToAction% w260 h20 Center vTextToAction, %Action%
 
-Gui, Add, Button, x10 y250 w240 h20 gChoiseProcess vprocessButton, %processButton%
+Gui, Add, Button, x10 y%yButton% w240 h30 gActives vActive, %Active%
 SetTimer, UpdateResultTime, 150
 Gui, Show, w260 h%hideWindow%, Таймер
 GuiControl, Choose, Action, %Action%
@@ -117,24 +129,24 @@ EditAction:
 Gui, Submit, NoHide
 if (Action == "Завершить процесс")
 {
-    while (hideWindow <= 280)
+    while (hideWindow <= 285)
     {
         Gui, Show, w260 h%hideWindow%, Таймер
         Sleep, 20
         hideWindow := hideWindow + 10
     }
-    hideWindow := 280
+    hideWindow := 285
     stateWindow := 1
 }
 else
 {
-    while (hideWindow >= 250)
+    while (hideWindow >= 255)
     {
         Gui, Show, w260 h%hideWindow%, Таймер
         Sleep, 20
         hideWindow := hideWindow - 10
     }
-    hideWindow := 250
+    hideWindow := 255
     stateWindow := 0
 }
 Return
@@ -167,13 +179,13 @@ if (Time_Hour != 00) or (Time_Min != 00) or (Time_Sec != 00)
         LMin := Time_Min
         LSec := Time_Sec
         Sleep, 200
-        while (hideWindow >= 145)
+        while (hideWindow >= 155)
         {
             Gui, Show, w260 h%hideWindow%, Таймер
             Sleep, 20
             hideWindow := hideWindow - 10
         }
-        hideWindow := 145
+        hideWindow := 155
         StringLower, Lower_Action, Action
         TrayTip, Таймер, Таймер успешно запущен.`nЧерез %Time_Hour% ч. %Time_Min% мин. %Time_Sec% сек. будет выполнено действие: ''%Lower_Action%''.
     } else {
@@ -182,21 +194,21 @@ if (Time_Hour != 00) or (Time_Min != 00) or (Time_Sec != 00)
         Time_Sec := LSec
         if (stateWindow)
         {
-            while (hideWindow <= 280)
+            while (hideWindow <= 285)
             {
                 Gui, Show, w260 h%hideWindow%, Таймер
                 Sleep, 20
                 hideWindow := hideWindow + 10
             }
-            hideWindow := 280
+            hideWindow := 285
         } else {
-            while (hideWindow <= 250)
+            while (hideWindow <= 255)
             {
                 Gui, Show, w260 h%hideWindow%, Таймер
                 Sleep, 20
                 hideWindow := hideWindow + 10
             }
-            hideWindow := 250
+            hideWindow := 255
         }
         if (Indicator = ":") or (Indicator1 = ":") 
         {
@@ -242,9 +254,11 @@ if (Time_Hour != 00 or Time_Min != 00 or Time_Sec != 00)
     GuiControl, Show, TextToResultTime
     ResultTimes := getResultTime(Time_Hour, Time_Min, Time_Sec)
     GuiControl,, TextToResultTime, Таймер сработает в %ResultTimes%
+    GuiControl, Enable, Active
 }
 Else
 {
+    GuiControl, Disable, Active
     GuiControl, Hide, TextToResultTime
 }
 Return
@@ -260,6 +274,8 @@ if (Time_Hour == 00) and (Time_Min == 00) and (Time_Sec == 00) {
     GuiControl,, Indicator, %Indicator%
     GuiControl,, Indicator1, %Indicator1%
     a := !a
+    if (Action == "Звуковое оповещение") 
+        SoundPlay, %pathToDirSong%\ding.mp3
     Sleep, 3000
 
     ; ДЕЙСТВИЕ
@@ -272,9 +288,9 @@ if (Time_Hour == 00) and (Time_Min == 00) and (Time_Sec == 00) {
         Shutdown, 2
     else if (Action == "Выключить компьютер")
         Shutdown, 5
-    else if (Action == "Звуковое оповещение") 
-        SoundPlay, %A_WinDir%\Media\ding.wav
     
+    SetTimer, UpdateResultTime, % (a ? "Off" : 150)
+
     Indicator := " "
     Indicator1 := " "
     Time_Hour := LHour
@@ -285,7 +301,9 @@ if (Time_Hour == 00) and (Time_Min == 00) and (Time_Sec == 00) {
     GuiControl, Move, Time_Sec, % "y" (a ? "10" : yTime)
     GuiControl, Move, Indicator, % "y" (a ? "8" : yIndicator)
     GuiControl, Move, Indicator1, % "y" (a ? "8" : yIndicator)
-    GuiControl, Move, Active, % "y" (a ? "85" : yButton)
+    GuiControl, Move, Active, % "y" (a ? "115" : yButton)
+    GuiControl, Move, TextToResultTime, % "y" (a ? "70" : yTextToResult)
+    GuiControl, Move, TextToAction, % "y" (a ? "90" : yTextToAction)
     GuiControl,, Indicator, %Indicator%
     GuiControl,, Indicator1, %Indicator1%
     GuiControl,, Time_Hour, %Time_Hour%
@@ -302,21 +320,21 @@ if (Time_Hour == 00) and (Time_Min == 00) and (Time_Sec == 00) {
     
     if (stateWindow)
     {
-        while (hideWindow <= 280)
+        while (hideWindow <= 285)
         {
             Gui, Show, w260 h%hideWindow% NoActivate, Таймер
             Sleep, 20
             hideWindow := hideWindow + 10
         }
-        hideWindow := 280
+        hideWindow := 285
     } else {
-        while (hideWindow <= 250)
+        while (hideWindow <= 255)
         {
             Gui, Show, w260 h%hideWindow% NoActivate, Таймер
             Sleep, 20
             hideWindow := hideWindow + 10
         }
-        hideWindow := 250
+        hideWindow := 255
     }
     Return
 }
